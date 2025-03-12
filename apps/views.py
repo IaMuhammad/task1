@@ -27,8 +27,8 @@ class StadiumListCreateAPIView(ListCreateAPIView):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = StadiumListFilter
 
-    def get_permissions(self):
-        return self.permission_class_dict.get(self.request.method, (IsAuthenticated,))
+    # def get_permissions(self):
+    #     return self.permission_class_dict.get(self.request.method, (IsAuthenticated,))
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -38,7 +38,7 @@ class StadiumListCreateAPIView(ListCreateAPIView):
         }
         self.permission_class_dict = {
             'POST': (IsAdminOrSupperUser,),
-            'GET': (AllowAny,)
+            'GET': (IsAuthenticated,)
         }
 
     def get_serializer_class(self):

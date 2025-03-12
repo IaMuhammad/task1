@@ -1,6 +1,8 @@
 import os
+from datetime import timedelta
 
 from django.core.files.storage import FileSystemStorage
+from django.db.models import Q
 from rest_framework import serializers
 
 from apps.models import Stadium, Order
@@ -32,13 +34,18 @@ class BookStadiumSerializer(serializers.ModelSerializer):
         validate = super().validate(attrs)
         stadium: Stadium = validate['stadium']
         boolean = stadium.order_set.filter(
+            Q(start_time__lte=validate['start_time'], end_time__gt=validate['start_time']),
             date=validate['date'],
-            start_time__gte=validate['start_time'],
-            end_time__lte=validate['end_time']
+
         ).exists()
         if boolean:
             raise serializers.ValidationError('Order already booked')
         return validate
+
+    def create(self, validated_data):
+        validated_data['hours'] = validated_data['end_time'].hour - validated_data['start_time'].hour
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
 
 class UploadImageSerializer(serializers.Serializer):
@@ -88,6 +95,7 @@ class StadiumDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stadium
         fields = ('id', 'name', 'contact_name', 'contact_phone', 'price', 'address', 'images')
+
 
 class OrderModelSerializer(serializers.ModelSerializer):
     class Meta:
